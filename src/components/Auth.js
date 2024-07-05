@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import user1 from "./assets/daim.jpeg";
+import user2 from "./assets/naveed.jpg";
+import user3 from "./assets/usman.png";
+import user4 from "./assets/kashif.png";
 
 const Auth = ({ onAuth }) => {
   const navigate = useNavigate();
@@ -8,6 +12,7 @@ const Auth = ({ onAuth }) => {
     name: "",
     email: "",
     password: "",
+    imageURL: "",
   });
   const [users, setUsers] = useState([
     {
@@ -15,24 +20,28 @@ const Auth = ({ onAuth }) => {
       id: 1,
       name: "Muhammad Daim Khan",
       password: "daim",
+      imageURL: user1,
     },
     {
       email: "naveed@khan",
       id: 2,
       name: "Hafiz Naveed Khan",
       password: "naveed",
+      imageURL: user2,
     },
     {
       email: "usman@khan",
       id: 3,
       name: "Dr.Usman Khan",
       password: "usman",
+      imageURL: user3,
     },
     {
       email: "kashif@khan",
       id: 4,
       name: "Kashif Khan",
       password: "kashif",
+      imageURL: user4,
     },
   ]);
 
@@ -53,29 +62,27 @@ const Auth = ({ onAuth }) => {
 
       if (user && user.password === formData.password) {
         onAuth(user);
-        console.log("Successful login");
         navigate("/posts");
       } else {
         alert("Invalid Email or Password");
-        console.log("Invalid Email or Password");
       }
     }
   };
-
-  console.log("Registered users", users);
 
   return (
     <div className="container">
       <h2>{isSignUp ? "Sign Up" : "Sign In"}</h2>
       <form onSubmit={handleSubmit}>
         {isSignUp && (
-          <input
-            name="name"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+          <>
+            <input
+              name="name"
+              placeholder="Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </>
         )}
         <input
           name="email"

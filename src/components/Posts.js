@@ -124,10 +124,11 @@ const Posts = ({ user }) => {
   return (
     <div className="container-main">
       <div className="header">
+        <h2>Blog Post's</h2>
         <span>Welcome, {user?.name}</span>
-        <button onClick={handleLogout}>Logout</button>
+        {user?.imageURL && <img src={user.imageURL} alt={user.name} />}
       </div>
-      <h2>Blog Posts</h2>
+      <button onClick={handleLogout}>Logout</button>
       <div>
         <h3>Create New Post</h3>
         <input
