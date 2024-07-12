@@ -1,9 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import user1 from "./assets/daim.jpeg";
-import user2 from "./assets/naveed.jpg";
-import user3 from "./assets/usman.png";
-import user4 from "./assets/kashif.png";
 
 const Auth = ({ onAuth }) => {
   const navigate = useNavigate();
@@ -19,48 +16,60 @@ const Auth = ({ onAuth }) => {
       email: "daim@khan",
       id: 1,
       name: "Muhammad Daim Khan",
-      password: "daim",
+      password: "Daimkhan1@",
       imageURL: user1,
-    },
-    {
-      email: "naveed@khan",
-      id: 2,
-      name: "Hafiz Naveed Khan",
-      password: "naveed",
-      imageURL: user2,
-    },
-    {
-      email: "usman@khan",
-      id: 3,
-      name: "Dr.Usman Khan",
-      password: "usman",
-      imageURL: user3,
-    },
-    {
-      email: "kashif@khan",
-      id: 4,
-      name: "Kashif Khan",
-      password: "kashif",
-      imageURL: user4,
     },
   ]);
 
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("authUser"));
+    if (storedUser) {
+      onAuth(storedUser);
+      navigate("/posts");
+    }
+  }, [navigate, onAuth]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return (
+      password.length >= minLength &&
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumber &&
+      hasSpecialChar
+    );
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (isSignUp) {
+      if (!validatePassword(formData.password)) {
+        alert(
+          "Password must be at least 8 characters include uppercase letter, number, and special character. ⚠"
+        );
+        return;
+      }
+
       const newUser = { id: users.length + 1, ...formData };
       setUsers([...users, newUser]);
+      localStorage.setItem("authUser", JSON.stringify(newUser));
       onAuth(newUser);
       navigate("/posts");
     } else {
       const user = users.find((user) => user.email === formData.email);
 
       if (user && user.password === formData.password) {
+        localStorage.setItem("authUser", JSON.stringify(user));
         onAuth(user);
         navigate("/posts");
       } else {
@@ -69,8 +78,15 @@ const Auth = ({ onAuth }) => {
     }
   };
 
+  const handleClose = () => {
+    navigate("/");
+  };
+
   return (
     <div className="container">
+      <div onClick={handleClose}>
+        <span>&times;</span>
+      </div>
       <h2>{isSignUp ? "Sign Up" : "Sign In"}</h2>
       <form onSubmit={handleSubmit}>
         {isSignUp && (

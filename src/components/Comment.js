@@ -24,11 +24,10 @@ const Comment = ({ comment, user, onUpdate, onDelete }) => {
   };
 
   return (
-    <div>
+    <>
       {isEditing ? (
         <form onSubmit={handleSubmit}>
           <textarea
-            className="cmnt-txt"
             value={editedContent}
             onChange={(e) => setEditedContent(e.target.value)}
             required
@@ -49,7 +48,7 @@ const Comment = ({ comment, user, onUpdate, onDelete }) => {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
