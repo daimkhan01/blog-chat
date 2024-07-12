@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import CommentForm from "./CommentForm";
 import Comment from "./Comment";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { fetchPosts, fetchComments } from "../api";
+import Footer from "./Footer";
 
-const Posts = ({ user }) => {
+const Posts = ({ user, onLogout, showFooter }) => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState({ title: "", body: "" });
@@ -11,23 +13,26 @@ const Posts = ({ user }) => {
   const [comments, setComments] = useState({});
   const [newPostId, setNewPostId] = useState(0);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(10);
 
-  const fetchPosts = () => {
-    fetch("https://jsonplaceholder.typicode.com/posts")
-      .then((response) => response.json())
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+  // To Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  useEffect(() => {
+    fetchPosts()
       .then((data) => {
         setPosts(data);
         setNewPostId(data.length + 1);
       })
       .catch((error) => console.error("Error fetching posts:", error));
-  };
+  }, []);
 
-  const fetchComments = (postId) => {
-    fetch(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`)
-      .then((response) => response.json())
+  const fetchCommentsForPost = (postId) => {
+    fetchComments(postId)
       .then((data) => {
         const existingComments = comments[postId] || [];
         const mergedComments = [...existingComments, ...data];
@@ -109,7 +114,7 @@ const Posts = ({ user }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authenticatedUser");
+    onLogout();
     navigate("/");
   };
 
@@ -122,93 +127,145 @@ const Posts = ({ user }) => {
   };
 
   return (
-    <div className="container-main">
-      <div className="header">
-        <h2>Blog Post's</h2>
-        <span>Welcome, {user?.name}</span>
-        {user?.imageURL && <img src={user.imageURL} alt={user.name} />}
-      </div>
-      <button onClick={handleLogout}>Logout</button>
-      <div>
-        <h3>Create New Post</h3>
-        <input
-          type="text"
-          placeholder="Title"
-          value={newPost.title}
-          onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-        />
-        <textarea
-          placeholder="Content"
-          value={newPost.body}
-          onChange={(e) => setNewPost({ ...newPost, body: e.target.value })}
-        />
-        <button onClick={handleCreatePost}>Create Post</button>
-      </div>
-
-      {editPost && (
-        <div>
-          <h3>Edit Post</h3>
-          <input
-            type="text"
-            placeholder="Title"
-            value={editPost.title}
-            onChange={(e) =>
-              setEditPost({ ...editPost, title: e.target.value })
-            }
-          />
-          <textarea
-            placeholder="Content"
-            value={editPost.body}
-            onChange={(e) => setEditPost({ ...editPost, body: e.target.value })}
-          />
-          <button onClick={handleUpdatePost}>Update Post</button>
-          <button onClick={() => setEditPost(null)}>Cancel</button>
+    <>
+      <div className="container-main">
+        <div className="header">
+          <Link className="head" to="/posts/1">
+            <h2>{user ? "Blog App Post's" : "Blog App"}</h2>
+          </Link>
+          {user ? (
+            <>
+              <span className="animated-underline">Welcome, {user.name}</span>
+              {user.imageURL && <img src={user.imageURL} alt={user.name} />}
+              <button onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <button>Sign In</button>
+            </Link>
+          )}
         </div>
-      )}
 
-      <ul>
-        {posts.map((post) => (
-          <li key={post.id}>
-            <h3>{post.title}</h3>
-            <p>{post.body}</p>
-            <button onClick={() => handleEditPost(post)}>Edit</button>
-            <button onClick={() => handleDeletePost(post.id)}>Delete</button>
-            <button onClick={() => fetchComments(post.id)}>
-              Load Comments
-            </button>
-
-            {/* Render comments */}
-            {comments[post.id] && (
-              <div>
-                <h4>Comments:</h4>
-                <ul>
-                  {comments[post.id].map((comment) => (
-                    <li key={comment.id}>
-                      <Comment
-                        comment={comment}
-                        user={user}
-                        onUpdate={(updatedComment) =>
-                          handleEditComment(post.id, updatedComment)
-                        }
-                        onDelete={(commentId) =>
-                          handleDeleteComment(post.id, commentId)
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Comment form */}
-            <CommentForm
-              postId={post.id}
-              addComment={(newComment) => addComment(post.id, newComment)}
+        {user && (
+          <div>
+            <h3>Create New Post</h3>
+            <input
+              type="text"
+              placeholder="Title"
+              value={newPost.title}
+              onChange={(e) =>
+                setNewPost({ ...newPost, title: e.target.value })
+              }
             />
-          </li>
-        ))}
-      </ul>
-    </div>
+            <textarea
+              placeholder="Content"
+              value={newPost.body}
+              onChange={(e) => setNewPost({ ...newPost, body: e.target.value })}
+            />
+            <button onClick={handleCreatePost}>Create Post</button>
+          </div>
+        )}
+        {editPost && (
+          <div>
+            <h3>Edit App</h3>
+            <input
+              type="text"
+              placeholder="Title"
+              value={editPost.title}
+              onChange={(e) =>
+                setEditPost({ ...editPost, title: e.target.value })
+              }
+            />
+            <textarea
+              placeholder="Content"
+              value={editPost.body}
+              onChange={(e) =>
+                setEditPost({ ...editPost, body: e.target.value })
+              }
+            />
+            <button onClick={handleUpdatePost}>Update Post</button>
+            <button onClick={() => setEditPost(null)}>Cancel</button>
+          </div>
+        )}
+        <ul>
+          {currentPosts.map((post) => (
+            <li key={post.id}>
+              <h3>{post.title}</h3>
+              <p>{post.body}</p>
+              {user ? (
+                <>
+                  <button onClick={() => handleEditPost(post)}>Edit</button>
+                  <button onClick={() => handleDeletePost(post.id)}>
+                    Delete
+                  </button>
+                </>
+              ) : (
+                <Link to="/auth">
+                  <button>Sign In to Edit/Delete</button>
+                </Link>
+              )}
+              <button onClick={() => fetchCommentsForPost(post.id)}>
+                Load Comments
+              </button>
+
+              {/* comment on post */}
+              {comments[post.id] && (
+                <div>
+                  <h4>Comments:</h4>
+                  <ul>
+                    {comments[post.id].map((comment) => (
+                      <li key={comment.id}>
+                        <Comment
+                          comment={comment}
+                          user={user}
+                          onUpdate={(updatedComment) =>
+                            handleEditComment(post.id, updatedComment)
+                          }
+                          onDelete={(commentId) =>
+                            handleDeleteComment(post.id, commentId)
+                          }
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {user && (
+                <CommentForm
+                  postId={post.id}
+                  addComment={(newComment) => addComment(post.id, newComment)}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {/* Pagination controls */}
+        <div>
+          <ul className="pagination">
+            {Array.from(
+              { length: Math.ceil(posts.length / postsPerPage) },
+              (_, index) => (
+                <li
+                  key={index}
+                  className={`page-item ${
+                    currentPage === index + 1 ? "active" : ""
+                  }`}
+                >
+                  <button
+                    onClick={() => paginate(index + 1)}
+                    className="page-link"
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      </div>
+      {showFooter && <Footer />}
+    </>
   );
 };
 

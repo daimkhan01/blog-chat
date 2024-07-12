@@ -11,7 +11,7 @@ const CommentForm = ({ postId, addComment }) => {
       postId,
       body: content,
     };
-
+    console.log(newComment);
     addComment(newComment);
     setContent("");
   };
