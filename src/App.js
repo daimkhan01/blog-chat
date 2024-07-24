@@ -9,6 +9,8 @@ import Auth from "./components/Auth";
 import Posts from "./components/Posts";
 import NotFound from "./components/NotFound";
 import PostCommentView from "./components/PostCommentView";
+import CreatePost from "./components/CreatePost";
+import Layout from "./components/Layout ";
 import "./App.css";
 
 const App = () => {
@@ -23,6 +25,7 @@ const App = () => {
 
   const handleAuth = (userData) => {
     setUser(userData);
+    localStorage.setItem("authUser", JSON.stringify(userData));
   };
 
   const handleLogout = () => {
@@ -35,20 +38,20 @@ const App = () => {
       <Routes>
         <Route
           path="/"
-          element={<Posts user={user} onLogout={handleLogout} showFooter />}
-        />
-        <Route path="/posts/:commentId" element={<PostCommentView />} />
-        <Route path="/auth" element={<Auth onAuth={handleAuth} />} />
-        <Route
-          path="/posts"
-          element={
-            user ? (
-              <Posts user={user} onLogout={handleLogout} showFooter />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          }
-        />
+          element={<Layout user={user} onLogout={handleLogout} />}
+        >
+          <Route index element={<Posts user={user} />} />
+          <Route path="posts/new" element={<CreatePost user={user} />} />
+          <Route
+            path="posts/:commentId"
+            element={<PostCommentView user={user} />}
+          />
+          <Route
+            path="posts"
+            element={user ? <Posts user={user} /> : <Navigate to="/auth" />}
+          />
+          <Route path="/auth" element={<Auth onAuth={handleAuth} />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

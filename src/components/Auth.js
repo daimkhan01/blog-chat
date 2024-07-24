@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import user1 from "./assets/daim.jpeg";
 
 const Auth = ({ onAuth }) => {
   const navigate = useNavigate();
@@ -9,17 +8,8 @@ const Auth = ({ onAuth }) => {
     name: "",
     email: "",
     password: "",
-    imageURL: "",
   });
-  const [users, setUsers] = useState([
-    {
-      email: "daim@khan",
-      id: 1,
-      name: "Muhammad Daim Khan",
-      password: "Daimkhan1@",
-      imageURL: user1,
-    },
-  ]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("authUser"));

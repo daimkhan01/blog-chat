@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const Comment = ({ comment, user, onUpdate, onDelete }) => {
+const Comment = ({ comment, user, onUpdate, onDelete, isNewPost }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.body);
 
@@ -40,10 +40,12 @@ const Comment = ({ comment, user, onUpdate, onDelete }) => {
       ) : (
         <div>
           <p>{comment.body}</p>
-          {user && (
+          {user && isNewPost && (
             <div>
               <button onClick={handleEdit}>Edit</button>
-              <button onClick={handleDelete}>Delete</button>
+              <button className="btn" onClick={handleDelete}>
+                Delete
+              </button>
             </div>
           )}
         </div>
