@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 
-const CreatePost = ({ user }) => {
+const CreatePost = ({ addNewPost }) => {
+  const { postId } = useParams();
   const [newPost, setNewPost] = useState({ title: "", body: "" });
   const [posts, setPosts] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -8,24 +10,50 @@ const CreatePost = ({ user }) => {
   const [editCommentIndex, setEditCommentIndex] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [editCommentPostIndex, setEditCommentPostIndex] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const storedPosts = localStorage.getItem("posts");
+    if (storedPosts) {
+      const postsData = JSON.parse(storedPosts);
+      setPosts(postsData);
+
+      if (postId) {
+        const post = postsData.find((p) => p.id === parseInt(postId));
+        if (post) {
+          setNewPost({ title: post.title, body: post.body });
+          setEditIndex(postsData.indexOf(post));
+        }
+      }
+    }
+  }, [postId]);
+
+  const updateLocalStorage = (updatedPosts) => {
+    localStorage.setItem("posts", JSON.stringify(updatedPosts));
+  };
 
   const handleCreatePost = () => {
     if (!newPost.title || !newPost.body) {
-      alert("Title and Content are required ⚠");
+      setErrorMessage("Title and Body are required ⚠");
       return;
     }
 
+    let updatedPosts;
     if (editIndex !== null) {
-      const updatedPosts = posts.map((post, index) =>
+      updatedPosts = posts.map((post, index) =>
         index === editIndex ? { ...post, ...newPost } : post
       );
-      setPosts(updatedPosts);
       setEditIndex(null);
     } else {
-      setPosts([...posts, { ...newPost, comments: [] }]);
+      const post = { ...newPost, id: Date.now(), comments: [] };
+      updatedPosts = [...posts, post];
+      addNewPost(post);
     }
 
+    setPosts(updatedPosts);
+    updateLocalStorage(updatedPosts);
     setNewPost({ title: "", body: "" });
+    setErrorMessage("");
   };
 
   const handleEditPost = (index) => {
@@ -36,6 +64,7 @@ const CreatePost = ({ user }) => {
   const handleDeletePost = (index) => {
     const updatedPosts = posts.filter((_, i) => i !== index);
     setPosts(updatedPosts);
+    updateLocalStorage(updatedPosts);
     if (editIndex === index) {
       setNewPost({ title: "", body: "" });
       setEditIndex(null);
@@ -49,28 +78,36 @@ const CreatePost = ({ user }) => {
 
   const handleAddComment = (postIndex) => {
     if (!commentText.trim()) {
-      alert("Comment cannot be empty ⚠");
+      setErrorMessage("Comment cannot be empty ⚠");
       return;
     }
 
     const updatedPosts = posts.map((post, index) =>
       index === postIndex
-        ? { ...post, comments: [...(post.comments || []), commentText] }
+        ? {
+            ...post,
+            comments: [
+              ...(post.comments || []),
+              { id: Date.now(), body: commentText },
+            ],
+          }
         : post
     );
     setPosts(updatedPosts);
+    updateLocalStorage(updatedPosts);
     setCommentText("");
+    setErrorMessage("");
   };
 
   const handleEditComment = (postIndex, commentIndex, comment) => {
     setEditCommentPostIndex(postIndex);
     setEditCommentIndex(commentIndex);
-    setEditCommentText(comment);
+    setEditCommentText(comment.body);
   };
 
   const handleUpdateComment = () => {
     if (!editCommentText.trim()) {
-      alert("Comment cannot be empty ⚠");
+      setErrorMessage("Comment cannot be empty ⚠");
       return;
     }
 
@@ -79,14 +116,18 @@ const CreatePost = ({ user }) => {
         ? {
             ...post,
             comments: post.comments.map((comment, i) =>
-              i === editCommentIndex ? editCommentText : comment
+              i === editCommentIndex
+                ? { ...comment, body: editCommentText }
+                : comment
             ),
           }
         : post
     );
     setPosts(updatedPosts);
+    updateLocalStorage(updatedPosts);
     setEditCommentIndex(null);
     setEditCommentText("");
+    setErrorMessage("");
   };
 
   const handleCancelCommentEdit = () => {
@@ -104,13 +145,19 @@ const CreatePost = ({ user }) => {
         : post
     );
     setPosts(updatedPosts);
+    updateLocalStorage(updatedPosts);
   };
 
+  const postToShow = postId
+    ? posts.find((post) => post.id === parseInt(postId))
+    : null;
+
   return (
-    <div className="container-main">
+    <div className="container-main comment-view">
       <h1 className="crt-psts">
         {editIndex !== null ? "Edit Post ..." : "Create Post ..."}
       </h1>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
       <input
         type="text"
         placeholder="Title"
@@ -119,7 +166,7 @@ const CreatePost = ({ user }) => {
       />
       <textarea
         className="txt-area"
-        placeholder="Content"
+        placeholder="Body"
         value={newPost.body}
         onChange={(e) => setNewPost({ ...newPost, body: e.target.value })}
       />
@@ -128,80 +175,88 @@ const CreatePost = ({ user }) => {
       </button>
       {editIndex !== null && <button onClick={handleCancelEdit}>Cancel</button>}
 
-      {posts.length > 0 && (
-        <div className="posts-list">
+      {/* Display the post and its comments */}
+      {postToShow && (
+        <div className="post-comment">
+          <h3>{postToShow.title}</h3>
+          <p>{postToShow.body}</p>
+          {postToShow.comments && postToShow.comments.length > 0 && (
+            <div>
+              <h4>Comments:</h4>
+              <ul>
+                {postToShow.comments.map((comment, commentIndex) => (
+                  <li key={comment.id}>
+                    {editCommentIndex === commentIndex &&
+                    editCommentPostIndex ===
+                      (postToShow.id ? posts.indexOf(postToShow) : -1) ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editCommentText}
+                          onChange={(e) => setEditCommentText(e.target.value)}
+                        />
+                        <button onClick={handleUpdateComment}>
+                          Update Comment
+                        </button>
+                        <button onClick={handleCancelCommentEdit}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p>{comment.body}</p>
+                        <button
+                          onClick={() =>
+                            handleEditComment(
+                              posts.indexOf(postToShow),
+                              commentIndex,
+                              comment
+                            )
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn"
+                          onClick={() =>
+                            handleDeleteComment(
+                              posts.indexOf(postToShow),
+                              commentIndex
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <input
+            type="text"
+            placeholder="Add a comment"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+          />
+          <button onClick={() => handleAddComment(posts.indexOf(postToShow))}>
+            Add Comment
+          </button>
+        </div>
+      )}
+      {!postId && (
+        <div className="all-posts">
           <h3>All Posts:</h3>
           <ul>
             {posts.map((post, index) => (
-              <li key={index} className="post-item">
+              <li key={post.id}>
                 <h3>{post.title}</h3>
                 <p>{post.body}</p>
                 <button onClick={() => handleEditPost(index)}>Edit</button>
                 <button className="btn" onClick={() => handleDeletePost(index)}>
                   Delete
                 </button>
-
-                <div className="comments-section">
-                  <h4>Comments:</h4>
-                  <input
-                    type="text"
-                    placeholder="Add a comment"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                  <button onClick={() => handleAddComment(index)}>
-                    Add Comment
-                  </button>
-                  {post.comments.length > 0 && (
-                    <ul>
-                      {post.comments.map((comment, commentIndex) => (
-                        <li key={commentIndex} className="comment-item">
-                          {editCommentIndex === commentIndex &&
-                          editCommentPostIndex === index ? (
-                            <>
-                              <input
-                                type="text"
-                                value={editCommentText}
-                                onChange={(e) =>
-                                  setEditCommentText(e.target.value)
-                                }
-                              />
-                              <button onClick={handleUpdateComment}>
-                                Update Comment
-                              </button>
-                              <button onClick={handleCancelCommentEdit}>
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <p>{comment}</p>
-                              <button
-                                onClick={() =>
-                                  handleEditComment(
-                                    index,
-                                    commentIndex,
-                                    comment
-                                  )
-                                }
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn"
-                                onClick={() =>
-                                  handleDeleteComment(index, commentIndex)
-                                }
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
               </li>
             ))}
           </ul>

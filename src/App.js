@@ -15,6 +15,7 @@ import "./App.css";
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("authUser"));
@@ -33,6 +34,10 @@ const App = () => {
     localStorage.removeItem("authUser");
   };
 
+  const addNewPost = (post) => {
+    setPosts([post, ...posts]);
+  };
+
   return (
     <Router>
       <Routes>
@@ -40,15 +45,27 @@ const App = () => {
           path="/"
           element={<Layout user={user} onLogout={handleLogout} />}
         >
-          <Route index element={<Posts user={user} />} />
-          <Route path="posts/new" element={<CreatePost user={user} />} />
           <Route
-            path="posts/:commentId"
+            index
+            element={<Posts user={user} posts={posts} setPosts={setPosts} />}
+          />
+          <Route
+            path="posts/newpost"
+            element={<CreatePost user={user} addNewPost={addNewPost} />}
+          />
+          <Route
+            path="posts/:postId"
             element={<PostCommentView user={user} />}
           />
           <Route
             path="posts"
-            element={user ? <Posts user={user} /> : <Navigate to="/auth" />}
+            element={
+              user ? (
+                <Posts user={user} posts={posts} setPosts={setPosts} />
+              ) : (
+                <Navigate to="/auth" />
+              )
+            }
           />
           <Route path="/auth" element={<Auth onAuth={handleAuth} />} />
         </Route>

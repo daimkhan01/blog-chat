@@ -1,56 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 
-const Comment = ({ comment, user, onUpdate, onDelete, isNewPost }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(comment.body);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedContent(comment.body);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate({ ...comment, body: editedContent });
-    setIsEditing(false);
-  };
-
-  const handleDelete = () => {
-    onDelete(comment.id);
-  };
-
+const Comment = ({ comment }) => {
   return (
-    <>
-      {isEditing ? (
-        <form onSubmit={handleSubmit}>
-          <textarea
-            value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            required
-          />
-          <button type="submit">Save</button>
-          <button type="button" onClick={handleCancel}>
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <div>
-          <p>{comment.body}</p>
-          {user && isNewPost && (
-            <div>
-              <button onClick={handleEdit}>Edit</button>
-              <button className="btn" onClick={handleDelete}>
-                Delete
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </>
+    <div className="comment">
+      <p>{comment.body}</p>
+    </div>
   );
 };
 
